@@ -45,3 +45,33 @@ def create_post():
     user_id = token_auth.current_user().id
     new_post = Post(title=title, body=body, user_id=user_id)
     return jsonify(new_post.to_dict())
+
+
+@api.route('/posts/update/<int:post_id>', methods=['GET','PUT'])
+@token_auth.login_required
+def update_post(post_id):
+    post = Post.query.get_or_404(post_id)
+    if not request.is_json:
+        return jsonify({'error': 'Your request content-type must be application/json'}), 400
+    if post.author != token_auth.current_user():
+        print('hello world')
+        return jsonify({'error': 'you do not have access to edit this post'})
+    data = request.json
+    post.update(**data)
+
+    return jsonify(post.to_dict())
+
+@api.route('/posts/delete/<int:post_id>', methods=['DELETE'])
+@token_auth.login_required
+def delete_post(post_id):
+    post = Post.query.get_or_404(post_id)
+    print(post)
+    if not request.is_json:
+        return jsonify({'error': 'Your request content-type must be application/json'}), 400
+    if post.author != token_auth.current_user():
+        print('hello world')
+        return jsonify({'error': 'you do not have access to delete this post'})
+    else:
+        post.delete()
+
+    return jsonify({"deleted": "Post has been deleted."})
